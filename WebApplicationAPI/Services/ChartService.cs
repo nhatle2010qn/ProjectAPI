@@ -47,55 +47,26 @@ namespace WebApplicationAPI.Services
                 {
                     itemOrder = itemOrder.Where(d => d.OrderDate.Year == DateTime.Now.Year).ToList();
                 }
-            }
-           
+            }      
             var item = (from o in itemOrder
-                       join de in itemDetail
-                       on o.Id equals de.Id
-                       join pro in itemProduct
-                       on de.ProductId equals pro.Id
-                       join ca in itemCategory
-                       on pro.CategoryId equals ca.Id                       
-                       select new
-                       {
-                           categoryName = ca.Name,
-                           count = de.Quantity
-                       }).ToList();
-            string category = null;
-            List<ChartViewModel> listchart = new List<ChartViewModel>();        
-            for (int i = 0; i < item.Count(); i++)
+                        join de in itemDetail
+                        on o.Id equals de.Id
+                        join pro in itemProduct
+                        on de.ProductId equals pro.Id
+                        join ca in itemCategory
+                        on pro.CategoryId equals ca.Id
+                        orderby ca.Id
+                        select new
+                        {
+                            categoryName = ca.Name,
+                            count = de.Quantity
+                        }).ToList();
+            List<ChartViewModel> listchart = item.GroupBy(c => c.categoryName).Select(g => new ChartViewModel
             {
-                if(i == 0)
-                {
-                    ChartViewModel chart = new ChartViewModel();
-                    category = item[i].categoryName;
-                    chart.CategoryName = category;
-                    foreach(var cha in item)
-                    {
-                        if(cha.categoryName == category)
-                        {
-                            chart.Count += cha.count;
-                        }
-                    }
-                    listchart.Add(chart);
-                }
-                if (item[i].categoryName != category)
-                {
-                    ChartViewModel chart = new ChartViewModel();
-                    category = item[i].categoryName;
-                    chart.CategoryName = category;
-                    foreach (var cha in item)
-                    {
-                        if (cha.categoryName == category)
-                        {
-                            chart.Count += cha.count;
-                        }
-                    }
-                    listchart.Add(chart);
-                }              
-                
-               
-            }
+                CategoryName = g.Key,
+                Count = g.Sum(x => x.count)
+            }).ToList();            
+                                 
             return listchart;
         }
 
